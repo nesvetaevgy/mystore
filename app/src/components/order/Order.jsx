@@ -1,5 +1,9 @@
-import { Component } from 'react'
+import { Component, useContext, useEffect, useState } from 'react'
+import { useLocation } from 'react-router-dom'
 import './Order.css'
+import { WebInterfaceContext } from '../../WebInterfaceContext'
+import { HumanizeContext } from '../../HumanizeContext'
+import { CalculateContext } from '../../CalculateContext'
 
 class OrderProduct extends Component {
 	constructor(props) {
@@ -30,47 +34,35 @@ class OrderProduct extends Component {
 	}
 }
 
-export default class Order extends Component {
-	constructor(props) {
-        super(props)
-        this.state = {
-        	order: {
-        		fields: {
-        			products: []
-        		}
-        	}
-        }
-        this.humanizeTimestamp = props.humanizeTimestamp
-        this.calculateOrderProductsTotal = props.calculateOrderProductsTotal
-        this.fetchInterface = props.fetchInterface
-    }
-    componentDidMount() {
-    	const searchParams = new URLSearchParams(window.location.search)
-    	this.fetchInterface('getOrder', Object.fromEntries(searchParams)).then(order => this.setState({
-    		...this.state,
-    		order: order
-    	}))
-    }
-	render() {
-		
-		const orderProductsItems = []
-		for (const orderProduct of this.state.order.fields.products) {
-			orderProductsItems.push(<OrderProduct orderProduct={orderProduct} />)
-		}
+export default function Order() {
+    
+	const location = useLocation()
+	const webInterface = useContext(WebInterfaceContext)
+	const humanize = useContext(HumanizeContext)
+	const calculate = useContext(CalculateContext)
 
-		return this.state.order.pk && (
-			<div id='order'>
-				<div id='order-info'>
-					<div id='order-info-timestamp'>{this.humanizeTimestamp(this.state.order.fields.timestamp)}</div>
-					<div id='order-info-total'>{this.calculateOrderProductsTotal(this.state.order.fields.products)} &#8381;</div>
-				</div>
-				<div className='section'>
-					<div className='section-title'>Состав заказа</div>
-					<div id='order-products' className='section-content'>
-						{orderProductsItems}
-					</div>
+	const [order, setOrder] = useState([])
+
+	const searchParams = new URLSearchParams(location.search)
+
+	useEffect(() => {
+		webInterface.use('getOrder', Object.fromEntries(searchParams)).then(order => setOrder(order))
+	}, [])
+
+	return order.pk && (
+		<div id='order'>
+			<div id='order-info'>
+				<div id='order-info-timestamp'>{humanize.datetime(order.fields.timestamp)}</div>
+				<div id='order-info-total'>{calculate.orderProductsTotal(order.fields.products)} &#8381;</div>
+			</div>
+			<div className='section'>
+				<div className='section-title'>Состав заказа</div>
+				<div id='order-products' className='section-content'>
+					{order.fields.products.map(orderProduct => <OrderProduct
+						orderProduct={orderProduct}
+					/>)}
 				</div>
 			</div>
-		)
-	}
+		</div>
+	)
 }

@@ -8,7 +8,7 @@ from hashlib import sha256
 from uuid import uuid4
 from os import environ
 
-from data.views import get_products as data_get_products, get_orders as data_get_orders, get_order as data_get_order, create_order as data_create_order
+from data.views import get_products as data_get_products, get_product as data_get_product, get_orders as data_get_orders, get_order as data_get_order, create_order as data_create_order
 
 
 class OkResponse(JsonResponse):
@@ -76,6 +76,13 @@ def calculate_sale(price, sale):
 def get_products(request):
     products = data_get_products()
     return OkResponse(products)
+
+
+@csrf_exempt
+@get_params
+def get_product(request, params):
+    product = data_get_product(params.get('pk'), jsonfiy=True)
+    return OkResponse(product)
 
 @csrf_exempt
 @validate

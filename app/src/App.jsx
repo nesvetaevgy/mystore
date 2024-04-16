@@ -1,50 +1,30 @@
-import { Component, useContext, useReducer, useEffect } from 'react'
-import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom'
-import { WebAppContext } from './WebAppContext'
+import { useEffect, useReducer, useContext } from 'react'
+import { BrowserRouter, Routes, Route, useLocation, useNavigate } from 'react-router-dom'
+import { TelegramWebAppContext } from './TelegramWebAppContext'
 import { WebInterfaceContext } from './WebInterfaceContext'
 import { CartContext, CartDispatchContext } from './CartContext'
+import { CalculateContext } from './CalculateContext'
+import { HumanizeContext } from './HumanizeContext'
 import axios from 'axios'
 import Home from './components/home/Home'
+import Product from './components/product/Product'
 import Orders from './components/orders/Orders'
 import Order from './components/order/Order'
 import './App.css'
 
-// class Cart {
-//     constructor(cartProducts = new Map()) {
-//         this.products = cartProducts
-//     }
-//     calculateSale(price, sale = 0) {
-//         return (price * (100 - sale) / 100).toFixed(2)
-//     }
-//     calculateTotal(products) {
-//         let total = 0
-//         for (const product of products) {
-//             if (this.products.has(product.pk)) {
-//                 total += this.calculateSale(product.fields.price, product.fields.details.sale) * this.products.get(product.pk)
-//             }
-//         }
-//         return total.toFixed(2)
-//     }
-// }
-
 function BackButton() {
 
-    const WebApp = useContext(WebAppContext)
+    const TelegramWebApp = useContext(TelegramWebAppContext)
 
     const location = useLocation()
+    const navigate = useNavigate()
 
     useEffect(() => {
-        WebApp.BackButton.onClick(() => {
-            window.history.back()
-        })
+        TelegramWebApp.BackButton.onClick(() => navigate(-1))
     }, [])
 
     useEffect(() => {
-        if (location.pathname !== '/') {
-            WebApp.BackButton.show()
-        } else {
-            WebApp.BackButton.hide()
-        }
+        location.pathname !== '/' ? TelegramWebApp.BackButton.show() : TelegramWebApp.BackButton.hide()
     }, [location])
     
     return <></>
@@ -52,121 +32,126 @@ function BackButton() {
 
 export default function App() {
 
-    // function addCartProduct(productPk) {
-    //     const cartProducts = this.state.cart.products
-    //     cartProducts.set(productPk, cartProducts.has(productPk) ? cartProducts.get(productPk) + 1 : 1)
-    //     this.setState({
-    //         ...this.state,
-    //         cart: new Cart(cartProducts)
-    //     })
-    // }
+    // WebApp
+    
+    const telegramWebApp = window.Telegram.WebApp
 
-    // function removeCartProduct(productPk) {
-    //     const cartProducts = this.state.cart.products
-    //     const newCartProductQuantity = cartProducts.get(productPk) - 1
-    //     newCartProductQuantity ? cartProducts.set(productPk, newCartProductQuantity) : cartProducts.delete(productPk)
-    //     this.setState({
-    //         ...this.state,
-    //         cart: new Cart(cartProducts)
-    //     })
-    // }
+    // WebInterface
 
-    // function clearCart() {
-    //     const cartProducts = this.state.cart.products
-    //     cartProducts.clear()
-    //     this.setState({
-    //         ...this.state,
-    //         cart: new Cart(cartProducts)
-    //     })
-    // }
-
-    // function calculateSale(price, sale = 0) {
-    //     return price * (100 - sale) / 100
-    // }
-
-    // function calculateOrderProductsTotal(orderProducts) {
-    //     let total = 0
-    //     for (const orderProduct of orderProducts) {
-    //         total += this.calculateSale(orderProduct.product.fields.price, orderProduct.product.fields.details.sale) * orderProduct.quantity
-    //     }
-    //     return total.toFixed(2)
-    // }
-
-    // const humanizedMonths = ["января", "февраля", "марта", "апреля", "мая", "июня", "июля", "августа", "сентября", "октября", "ноября", "декабря"]
-    // function humanizeTimestamp(timestamp) {
-    //     const date = new Date(timestamp)
-    //     return `${date.getDate()} ${this.humanizedMonths[date.getMonth()]} ${date.toLocaleTimeString().slice(0, 5)}`
-    // }
-
-    // function fetchInterface(method, params = {}) {
-    //     return axios.post(`${window.location.origin}/interface/${method}`, {
-    //         ...params,
-    //     }, {
-    //         headers: {
-    //             'X-Csrftoken': this.validata.csrftoken,
-    //             'X-Validata': JSON.stringify(this.validata)
-    //         }
-    //     }).then(response => response.data.result)
-    // }
-
+    const csrftoken = ''
+    
     const validata = (() => {
-        const webAppInitDataSearchParams = new URLSearchParams(window.Telegram.WebApp.initData)
-        const hash = webAppInitDataSearchParams.get('hash')
-        webAppInitDataSearchParams.delete('hash')
-        webAppInitDataSearchParams.sort()
-        const dataCheckString = webAppInitDataSearchParams.toString().replaceAll('&', '\n')
+        const telegramWebAppInitDataSearchParams = new URLSearchParams(telegramWebApp.initData)
+        const hash = telegramWebAppInitDataSearchParams.get('hash')
+        telegramWebAppInitDataSearchParams.delete('hash')
+        telegramWebAppInitDataSearchParams.sort()
+        const dataCheckString = telegramWebAppInitDataSearchParams.toString().replaceAll('&', '\n')
         return {
             dataCheckString: dataCheckString,
             hash: hash
         }
     })()
 
-    const WebInterface = {
+    const webInterface = {
         use: async (method, params = {}) => {
             return axios.post(`/interface/${method}`, params, {
                 headers: {
+                    'X-Csrftoken': csrftoken,
                     'X-Validata': JSON.stringify(validata)
                 }
             }).then(response => response.data.result)
         }
     }
 
+    // Cart
+
     const [cart, cartDispatch] = useReducer(cartReducer, initialCart)
 
-    const Cart = {
-        products: new Map(),
-        addProduct: (productPk) => {
-            cartDispatch({
-                type: 'ADD_PRODUCT',
-                productPk: productPk
-            })
+    // Calculate
+
+    const calculate = {
+        calculateTotal: (price, sale = 0) => {
+            return price * (100 - sale) / 100
+        },
+        calculateCartTotal: (cart, products) => {
+            let total = 0
+            for (const product of products) {
+                if (cart.products.has(product.pk)) {
+                    total += calculate.calculateTotal(product.fields.price, product.fields.details.sale) * cart.products.get(product.pk)
+                }
+            }
+            return total
+        },
+        orderProductsTotal: orderProducts => {
+            let total = 0
+            for (const orderProduct of orderProducts) {
+                total += calculate.calculateTotal(orderProduct.product.fields.price, orderProduct.product.fields.details.sale) * orderProduct.quantity
+            }
+            return total
+        }
+    }
+
+    // Humanize
+
+    const humanize = {
+        months: ["января", "февраля", "марта", "апреля", "мая", "июня", "июля", "августа", "сентября", "октября", "ноября", "декабря"],
+        datetime: datetime => {
+            const date = new Date(datetime)
+            return `${date.getDate()} ${humanize.months[date.getMonth()]} ${date.toLocaleTimeString().slice(0, 5)}`
+        },
+        humanizeTotal: price => {
+            return price.toFixed(2)
         }
     }
 
     return (
-        <TelegramWebAppContext.Provider value={window.Telegram.WebApp}>
-            <WebInterfaceContext.Provider value={WebInterface}>
-                <CartContext.Provider value={Cart}>
-                    <BrowserRouter>
-                        <BackButton />
-                        <Routes>
-                            <Route path='/' element={<Home />} />
-                            <Route path='/orders' element={<Orders />} />
-                            <Route path='/orders/order' element={<Order />} />
-                        </Routes>
-                    </BrowserRouter>
+        <TelegramWebAppContext.Provider value={telegramWebApp}>
+            <WebInterfaceContext.Provider value={webInterface}>
+                <CartContext.Provider value={cart}>
+                    <CartDispatchContext.Provider value={cartDispatch}>
+                        <CalculateContext.Provider value={calculate}>
+                            <HumanizeContext.Provider value={humanize}>
+                                <BrowserRouter>
+                                    <BackButton />
+                                    <Routes>
+                                        <Route path='/' element={<Home />} />
+                                        <Route path='/product' element={<Product />} />
+                                        <Route path='/orders' element={<Orders />} />
+                                        <Route path='/orders/order' element={<Order />} />
+                                    </Routes>
+                                </BrowserRouter>
+                            </HumanizeContext.Provider>
+                        </CalculateContext.Provider>
+                    </CartDispatchContext.Provider>
                 </CartContext.Provider>
             </WebInterfaceContext.Provider>
         </TelegramWebAppContext.Provider>
     )
 }
 
-const initialCart = new Map()
+const initialCart = {
+    products: new Map()
+}
 function cartReducer(cart, action) {
     switch (action.type) {
-        case 'addProduct':
+        case 'addProduct': {
+            const newCart = {...cart}
+            newCart.products.set(action.pk, newCart.products.has(action.pk) ? newCart.products.get(action.pk) + 1 : 1)
+            return newCart
+        }
+        case 'removeProduct': {
+            const newCart = {...cart}
+            const newProductQty = newCart.products.get(action.pk) - 1
+            newProductQty ? newCart.products.set(action.pk, newProductQty) : newCart.products.delete(action.pk)
+            return newCart
+        }
+        case 'clearProducts': {
+            const newCart = {...cart}
+            newCart.products.clear()
+            return newCart
+        }
+        default: {
             return cart
-        default:
-            return cart
+        }
     }
 }

@@ -23,6 +23,15 @@ def get_products():
 	return products_json
 
 
+def get_product(pk, jsonfiy = False):
+	
+	product = Product.objects.get(pk=pk)
+
+	if jsonfiy:
+		product = jsonify([product])[0]
+	
+	return product
+
 
 def get_orders(user_id):
 	return jsonify(Order.objects.filter(user_id=user_id).order_by('-timestamp'))
