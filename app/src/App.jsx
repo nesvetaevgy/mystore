@@ -31,6 +31,23 @@ function BackButton() {
     return <></>
 }
 
+function saveMapData(key, map) {
+    window.sessionStorage.setItem(key, JSON.stringify(Object.fromEntries(map)))
+}
+
+function loadMapData(key) {
+    const map = new Map(Object.entries(JSON.parse(window.sessionStorage.getItem(key))))
+    map.forEach((value, key) => {
+        map.set(parseInt(key), value)
+    })
+    map.forEach((value, key) => {
+        if (typeof key === "string") {
+            map.delete(key)
+        }
+    })
+    return map
+}
+
 export default function App() {
 
     // TelegramWebApp
@@ -67,6 +84,12 @@ export default function App() {
     // Cart
 
     const [cart, cartDispatch] = useReducer(cartReducer, initialCart)
+
+    useEffect(() => {
+        cartDispatch({
+            type: 'loadProducts'
+        })
+    }, [])
 
     // Calculate
 
@@ -138,35 +161,33 @@ const initialCart = {
     products: new Map()
 }
 function cartReducer(cart, action) {
+
+    const newCart = {...cart}
+
     switch (action.type) {
-        case 'addProduct': {
-            const newCart = {...cart}
+        case 'addProduct':
             newCart.products.set(action.pk, newCart.products.has(action.pk) ? newCart.products.get(action.pk) + 1 : 1)
-            return newCart
-        }
-        case 'removeProduct': {
-            const newCart = {...cart}
+            break
+        case 'removeProduct':
             const newProductQty = newCart.products.get(action.pk) - 1
             newProductQty ? newCart.products.set(action.pk, newProductQty) : newCart.products.delete(action.pk)
-            return newCart
-        }
-        case 'clearProducts': {
-            const newCart = {...cart}
+            break
+        case 'clearProducts':
             newCart.products.clear()
-            return newCart
-        }
-        case 'changeProduct': {
-            const newCart = {...cart}
+            break
+        case 'changeProduct':
             newCart.products.set(action.pk, action.qty)
-            return newCart
-        }
-        case 'deleteProduct': {
-            const newCart = {...cart}
+            break
+        case 'deleteProduct':
             newCart.products.delete(action.pk)
-            return newCart
-        }
-        default: {
-            return cart
-        }
+            break
+        case 'loadProducts':
+            newCart.products = window.sessionStorage.getItem('cartProducts') ? loadMapData('cartProducts') : new Map()
+            break
     }
+
+    saveMapData('cartProducts', newCart.products)
+
+    return newCart
+
 }

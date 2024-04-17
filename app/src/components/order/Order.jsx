@@ -3,6 +3,7 @@ import { useLocation } from 'react-router-dom'
 import { WebInterfaceContext } from '../../WebInterfaceContext'
 import { HumanizeContext } from '../../HumanizeContext'
 import { CalculateContext } from '../../CalculateContext'
+import { Loading } from '../Loading'
 import './Order.css'
 
 class OrderProduct extends Component {
@@ -50,7 +51,7 @@ export default function Order() {
 		webInterface.use('getOrder', Object.fromEntries(searchParams)).then(order => setOrder(order))
 	}, [])
 
-	return order.pk && (
+	return order.pk ? (
 		<div id='order'>
 			<div id='order-info'>
 				<div id='order-info-timestamp'>{humanize.datetime(order.fields.timestamp)}</div>
@@ -65,5 +66,7 @@ export default function Order() {
 				</div>
 			</div>
 		</div>
+	) : (
+		<Loading />
 	)
 }

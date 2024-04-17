@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { WebInterfaceContext } from '../../WebInterfaceContext'
 import { CalculateContext } from '../../CalculateContext'
 import { HumanizeContext } from '../../HumanizeContext'
+import { Loading } from '../Loading'
 import './Orders.css'
 
 class OrderPhoto extends Component {
@@ -65,11 +66,13 @@ export default function Orders() {
         webInterface.use('getOrders').then(orders => setOrders(orders))
     }, [])
 
-	return (
+	return orders.length > 0 ? (
 		<div id='orders'>
-			{orders.map(order =>
+			{orders.map(order => order.fields.status === 'paid' && (
 				<Order key={order.pk} order={order} />
-			)}
+			))}
 		</div>
+	) : (
+		<Loading />
 	)
 }

@@ -6,6 +6,7 @@ import { CalculateContext } from '../../CalculateContext'
 import { HumanizeContext } from '../../HumanizeContext'
 import { DialogBottom } from '../Dialog'
 import { Button } from '../Button'
+import { Loading } from '../Loading'
 import './Home.css'
 
 
@@ -118,7 +119,7 @@ export default function Home() {
         webInterface.use('getProducts').then(products => setProducts(products))
     }, [])
 
-    return (
+    return products.length > 0 ? (
         <div id='home'>
             <Navigation />
             {products.length > 0 && <Products products={products} />}
@@ -131,5 +132,7 @@ export default function Home() {
                 } />
             } />}
         </div>
+    ) : (
+        <Loading />
     )
 }

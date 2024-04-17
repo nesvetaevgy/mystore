@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import { WebInterfaceContext } from '../../WebInterfaceContext'
 import { CartContext, CartDispatchContext } from '../../CartContext'
 import { HumanizeContext } from '../../HumanizeContext'
+import { Loading } from '../Loading'
 import './Product.css'
 
 export default function Product() {
@@ -55,7 +56,7 @@ export default function Product() {
         navigate(-1)
     }
 
-    return product.pk && (
+    return product.pk ? (
         <div id='product'>
             <div id='product-info'>
                 <div id='product-info-photo'>
@@ -91,6 +92,8 @@ export default function Product() {
                 </div>
             </div>
         </div>
+    ) : (
+        <Loading />
     )
 
 }
