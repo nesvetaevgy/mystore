@@ -106,3 +106,13 @@
 	justify-content: space-between;
 	border-radius: 12px;
 }
+
+/* Dialog */
+
+#home-dialog-button {
+	height: 100%;
+	padding: 0 16px;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+}

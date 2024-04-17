@@ -1,9 +1,9 @@
-import { Component, useContext, useEffect, useState } from 'react'
+import { Component, useState, useEffect, useContext } from 'react'
 import { useLocation } from 'react-router-dom'
-import './Order.css'
 import { WebInterfaceContext } from '../../WebInterfaceContext'
 import { HumanizeContext } from '../../HumanizeContext'
 import { CalculateContext } from '../../CalculateContext'
+import './Order.css'
 
 class OrderProduct extends Component {
 	constructor(props) {
@@ -37,6 +37,7 @@ class OrderProduct extends Component {
 export default function Order() {
     
 	const location = useLocation()
+	
 	const webInterface = useContext(WebInterfaceContext)
 	const humanize = useContext(HumanizeContext)
 	const calculate = useContext(CalculateContext)

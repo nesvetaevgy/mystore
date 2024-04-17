@@ -1,30 +1,31 @@
 import { useEffect, useReducer, useContext } from 'react'
 import { BrowserRouter, Routes, Route, useLocation, useNavigate } from 'react-router-dom'
+import axios from 'axios'
 import { TelegramWebAppContext } from './TelegramWebAppContext'
 import { WebInterfaceContext } from './WebInterfaceContext'
 import { CartContext, CartDispatchContext } from './CartContext'
 import { CalculateContext } from './CalculateContext'
 import { HumanizeContext } from './HumanizeContext'
-import axios from 'axios'
 import Home from './components/home/Home'
 import Product from './components/product/Product'
 import Orders from './components/orders/Orders'
 import Order from './components/order/Order'
+import Cart from './components/cart/Cart'
 import './App.css'
 
 function BackButton() {
 
-    const TelegramWebApp = useContext(TelegramWebAppContext)
-
     const location = useLocation()
     const navigate = useNavigate()
 
+    const telegramWebApp = useContext(TelegramWebAppContext)
+
     useEffect(() => {
-        TelegramWebApp.BackButton.onClick(() => navigate(-1))
+        telegramWebApp.BackButton.onClick(() => navigate(-1))
     }, [])
 
     useEffect(() => {
-        location.pathname !== '/' ? TelegramWebApp.BackButton.show() : TelegramWebApp.BackButton.hide()
+        location.pathname !== '/' ? telegramWebApp.BackButton.show() : telegramWebApp.BackButton.hide()
     }, [location])
     
     return <></>
@@ -32,7 +33,7 @@ function BackButton() {
 
 export default function App() {
 
-    // WebApp
+    // TelegramWebApp
     
     const telegramWebApp = window.Telegram.WebApp
 
@@ -70,14 +71,14 @@ export default function App() {
     // Calculate
 
     const calculate = {
-        calculateTotal: (price, sale = 0) => {
+        total: (price, sale = 0) => {
             return price * (100 - sale) / 100
         },
-        calculateCartTotal: (cart, products) => {
+        cartTotal: (cart, products) => {
             let total = 0
             for (const product of products) {
                 if (cart.products.has(product.pk)) {
-                    total += calculate.calculateTotal(product.fields.price, product.fields.details.sale) * cart.products.get(product.pk)
+                    total += calculate.total(product.fields.price, product.fields.details.sale) * cart.products.get(product.pk)
                 }
             }
             return total
@@ -85,7 +86,7 @@ export default function App() {
         orderProductsTotal: orderProducts => {
             let total = 0
             for (const orderProduct of orderProducts) {
-                total += calculate.calculateTotal(orderProduct.product.fields.price, orderProduct.product.fields.details.sale) * orderProduct.quantity
+                total += calculate.total(orderProduct.product.fields.price, orderProduct.product.fields.details.sale) * orderProduct.quantity
             }
             return total
         }
@@ -94,13 +95,16 @@ export default function App() {
     // Humanize
 
     const humanize = {
+        symbol: {
+            ruble: "\u20bd"
+        },
         months: ["января", "февраля", "марта", "апреля", "мая", "июня", "июля", "августа", "сентября", "октября", "ноября", "декабря"],
         datetime: datetime => {
             const date = new Date(datetime)
             return `${date.getDate()} ${humanize.months[date.getMonth()]} ${date.toLocaleTimeString().slice(0, 5)}`
         },
-        humanizeTotal: price => {
-            return price.toFixed(2)
+        total: total => {
+            return total.toFixed(2)
         }
     }
 
@@ -118,6 +122,7 @@ export default function App() {
                                         <Route path='/product' element={<Product />} />
                                         <Route path='/orders' element={<Orders />} />
                                         <Route path='/orders/order' element={<Order />} />
+                                        <Route path='/cart' element={<Cart />} />
                                     </Routes>
                                 </BrowserRouter>
                             </HumanizeContext.Provider>
@@ -148,6 +153,16 @@ function cartReducer(cart, action) {
         case 'clearProducts': {
             const newCart = {...cart}
             newCart.products.clear()
+            return newCart
+        }
+        case 'changeProduct': {
+            const newCart = {...cart}
+            newCart.products.set(action.pk, action.qty)
+            return newCart
+        }
+        case 'deleteProduct': {
+            const newCart = {...cart}
+            newCart.products.delete(action.pk)
             return newCart
         }
         default: {

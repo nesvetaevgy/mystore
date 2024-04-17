@@ -17,3 +17,7 @@ a {
   color: inherit;
   text-decoration: inherit;
 }
+
+.pointer {
+  cursor: pointer;
+}

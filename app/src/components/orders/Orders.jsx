@@ -1,9 +1,9 @@
-import { Component, useContext, useEffect, useState } from 'react'
-import { WebInterfaceContext } from '../../WebInterfaceContext'
+import { Component, useState, useEffect, useContext } from 'react'
 import { useNavigate } from 'react-router-dom'
-import './Orders.css'
-import { HumanizeContext } from '../../HumanizeContext'
+import { WebInterfaceContext } from '../../WebInterfaceContext'
 import { CalculateContext } from '../../CalculateContext'
+import { HumanizeContext } from '../../HumanizeContext'
+import './Orders.css'
 
 class OrderPhoto extends Component {
 	constructor(props) {
@@ -46,7 +46,7 @@ function Order({ order }) {
 		<div className='order' onClick={() => navigate(`/orders/order?pk=${order.pk}`)}>
 			<div className='order-info'>
 				<div className='order-info-timestamp'>{humanize.datetime(order.fields.timestamp)}</div>
-				<div className='order-info-total'>{calculate.orderProductsTotal(order.fields.products)} &#8381;</div>
+				<div className='order-info-total'>{humanize.total(calculate.orderProductsTotal(order.fields.products))} {humanize.symbol.ruble}</div>
 			</div>
 			<div className='order-photos'>
 				{orderPhotosItems}
