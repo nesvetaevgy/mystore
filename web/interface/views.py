@@ -36,7 +36,7 @@ def validate(view):
     return validate_
 
 
-def create_prices(order_products: dict, bot_currency_factor: int):
+def create_prices(order_products: dict, bot_currency_factor: int) -> list:
     
     prices = []
     for order_product in order_products:
@@ -87,7 +87,6 @@ def get_queryset_json(queryset):
     return json_loads(serialize('json', queryset))
 
 
-@csrf_exempt
 def get_all_products(request):
 
     all_products = Product.objects.all()
@@ -96,7 +95,6 @@ def get_all_products(request):
     return create_ok_response(all_products_json)
 
 
-@csrf_exempt
 @get_parameters
 def get_product(request, parameters):
     
@@ -117,7 +115,6 @@ from uuid import uuid4
 
 from .models import Order
 
-@csrf_exempt
 @validate
 @get_parameters
 def create_order(request, parameters, client_data):
@@ -173,7 +170,6 @@ def update_order_status(request, parameters):
 
 # Третья часть проекта
 
-@csrf_exempt
 @validate
 def get_orders(request, client_data):
 
@@ -183,7 +179,6 @@ def get_orders(request, client_data):
     return create_ok_response(orders_json)
 
 
-@csrf_exempt
 @validate
 @get_parameters
 def get_order(request, parameters, client_data):

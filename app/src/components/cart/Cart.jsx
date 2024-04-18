@@ -69,6 +69,22 @@ export default function Cart() {
 
     useEffect(() => {
         webInterface.use('getAllProducts').then(products => setProducts(products))
+        telegramWebApp.onEvent('invoiceClosed', result => {
+            switch (result.status) {
+                case 'paid':
+                    cartDispatch({
+                        type: 'clearProducts'
+                    })
+                    navigate(`/orders/order?invoiceLink=${result.url}`)
+                    break
+                case 'cancelled':
+                    webInterface.use('updateOrderStatus', {
+                        invoiceLink: result.url,
+                        status: result.status
+                    })
+                    break
+            }
+        })
     }, [])
 
     if (!products) {
@@ -91,25 +107,6 @@ export default function Cart() {
             orderProducts: orderProducts
         }).then(invoiceLink => telegramWebApp.openInvoice(invoiceLink))
     }
-
-    useEffect(() => {
-        telegramWebApp.onEvent('invoiceClosed', result => {
-            switch (result.status) {
-                case 'paid':
-                    cartDispatch({
-                        type: 'clearProducts'
-                    })
-                    navigate(`/orders/order?invoiceLink=${result.url}`)
-                    break
-                case 'cancelled':
-                    webInterface.use('updateOrderStatus', {
-                        invoiceLink: result.url,
-                        status: result.status
-                    })
-                    break
-            }
-        })
-    }, [])
 
     return cart.products.size > 0 ? (
         <div id='cart'>
