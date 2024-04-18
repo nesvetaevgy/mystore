@@ -11,19 +11,16 @@ def validate(view):
     def validate_(request, *args):
 
         try:
-            validation_data = json_loads(request.headers['X-Validation-Data'])
+            validation_data = json_loads(request.headers.get('X-Validation-Data'))
         except:
             return create_fail_response("Не удалось получить данные для проверки клиента")
 
         if 'dataCheckString' not in validation_data and 'hash' not in validation_data:
-            return create_fail_response("Не удалось получить данные для проверки клиента")
+            return create_fail_response("Получены неправильные данные для подтверждения запроса")
 
         data_check_string_unquoted = unquote(validation_data.get('dataCheckString'))
 
-        hash_key = bytes.fromhex(environ['SECRET_KEY'])
-        hash_message = data_check_string_unquoted.encode()
-        hash_object = hmac_new(hash_key, hash_message, sha256)
-        result_hash = hash_object.hexdigest()
+        result_hash = hmac_new(bytes.fromhex(environ['SECRET_KEY']), data_check_string_unquoted.encode(), sha256).hexdigest()
 
         if result_hash != validation_data.get('hash'):
             return create_fail_response("Не удалось подтвердить клиента")
@@ -39,7 +36,7 @@ def validate(view):
     return validate_
 
 
-def create_prices(order_products, bot_currency_factor):
+def create_prices(order_products: dict, bot_currency_factor: int):
     
     prices = []
     for order_product in order_products:
