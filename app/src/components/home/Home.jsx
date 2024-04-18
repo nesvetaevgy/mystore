@@ -116,7 +116,7 @@ export default function Home() {
     const [products, setProducts] = useState([])
 
     useEffect(() => {
-        webInterface.use('getProducts').then(products => setProducts(products))
+        webInterface.use('getAllProducts').then(products => setProducts(products))
     }, [])
 
     return products.length > 0 ? (

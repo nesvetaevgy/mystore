@@ -1,177 +1,207 @@
-from django.http import JsonResponse
-from django.views.decorators.csrf import csrf_exempt
-from httpx import post
-from json import loads as json_loads
+from os import environ
+
+# Готовая часть проекта
+
 from urllib.parse import unquote, parse_qs
 from hmac import new as hmac_new
 from hashlib import sha256
-from uuid import uuid4
-from os import environ
-
-from data.views import get_products as data_get_products, get_product as data_get_product, get_orders as data_get_orders, get_order as data_get_order, create_order as data_create_order
-
-
-class OkResponse(JsonResponse):
-    def __init__(self, result = None):
-        super().__init__({
-            'ok': True,
-            'result': result
-        })
-
-
-class FailResponse(JsonResponse):
-    def __init__(self, description):
-        super().__init__({
-            'ok': False,
-            'description': description
-        })
-
-
-def get_params(view):
-    def get_params_(request, *args, **kwargs):
-
-        try:
-            params = json_loads(request.read())
-        except:
-            FailResponse("Не удалось получить параметры")
-
-        return view(request, params, *args, **kwargs)
-    return get_params_
 
 
 def validate(view):
-    def validate_(request, *args, **kwargs):
+    def validate_(request, *args):
 
         try:
-            validata = json_loads(request.headers.get('X-Validata'))
+            validation_data = json_loads(request.headers['X-Validation-Data'])
         except:
-            return FailResponse("Не удалось получить данные для подтверждения запроса")
+            return create_fail_response("Не удалось получить данные для проверки клиента")
 
-        if not (validata.get('dataCheckString') and validata.get('hash')):
-            return FailResponse("Получены неправильные данные для подтверждения запроса")
+        if 'dataCheckString' not in validation_data and 'hash' not in validation_data:
+            return create_fail_response("Не удалось получить данные для проверки клиента")
 
-        validata['dataCheckString'] = unquote(validata['dataCheckString'])
+        data_check_string_unquoted = unquote(validation_data.get('dataCheckString'))
 
-        result_hash = hmac_new(bytes.fromhex(environ['SECRET_KEY']), validata['dataCheckString'].encode(), sha256).hexdigest()
+        hash_key = bytes.fromhex(environ['SECRET_KEY'])
+        hash_message = data_check_string_unquoted.encode()
+        hash_object = hmac_new(hash_key, hash_message, sha256)
+        result_hash = hash_object.hexdigest()
 
-        if result_hash != validata['hash']:
-            return FailResponse("Запрос не подтвержден")
+        if result_hash != validation_data.get('hash'):
+            return create_fail_response("Не удалось подтвердить клиента")
 
-        tg_init_data = {}
-        for query, values in parse_qs(validata['dataCheckString'].replace('\n', '&')).items():
+        client_data = {}
+        for query, values in parse_qs(data_check_string_unquoted.replace('\n', '&')).items():
             if query != 'user':
-                tg_init_data[query] = values[0]
+                client_data[query] = values[0]
             else:
-                tg_init_data[query] = json_loads(values[0])
-
-        return view(request, tg_init_data, *args, **kwargs)
-
+                client_data[query] = json_loads(values[0])
+        
+        return view(request, client_data, *args)
     return validate_
 
 
-def calculate_sale(price, sale):
-    return price * (100 - sale) / 100
-
-@csrf_exempt
-def get_products(request):
-    products = data_get_products()
-    return OkResponse(products)
-
-
-@csrf_exempt
-@get_params
-def get_product(request, params):
-    product = data_get_product(params.get('pk'), jsonfiy=True)
-    return OkResponse(product)
-
-@csrf_exempt
-@validate
-@get_params
-def get_orders(request, params, tg_init_data):
-    orders = data_get_orders(tg_init_data['user']['id'])
-    return OkResponse(orders)
-
-
-@csrf_exempt
-@validate
-@get_params
-def get_order(request, params, tg_init_data):
-
-    kwargs = {}
-    if 'pk' in params:
-        kwargs['pk'] = params['pk']
-    if 'invoiceLink' in params:
-        kwargs['invoice_link'] = params['invoiceLink']
-
-    order = data_get_order(True, **kwargs)
-
-    return OkResponse(order)
-
-@csrf_exempt
-@validate
-@get_params
-def create_invoice_link(request, params, tg_init_data):
-
+def create_prices(order_products, bot_currency_factor):
+    
     prices = []
+    for order_product in order_products:
+        prices.append({
+            'label': f"{order_product['product']['fields']['title']} ({order_product['quantity']})",
+            'amount': order_product['product']['fields']['price'] * order_product['quantity'] * bot_currency_factor
+        })
+    
+    return prices
+
+
+# Первая часть проекта
+
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+from django.core.serializers import serialize
+from json import loads as json_loads
+
+from .models import Product
+
+def create_ok_response(result = None):
+    return JsonResponse({
+        'ok': True,
+        'result': result
+    })
+
+
+def create_fail_response(description = None):
+    return JsonResponse({
+        'ok': False,
+        'description': description
+    })
+
+
+def get_parameters(view):
+    def get_parameters_(request, *args, **kwargs):
+
+        try:
+            parameters = json_loads(request.read())
+        except:
+            return create_fail_response("Не удалось получить параметры")
+    
+        return view(request, parameters, *args, **kwargs)
+    return get_parameters_
+
+
+def get_queryset_json(queryset):
+    return json_loads(serialize('json', queryset))
+
+
+@csrf_exempt
+def get_all_products(request):
+
+    all_products = Product.objects.all()
+    all_products_json = get_queryset_json(all_products)
+    
+    return create_ok_response(all_products_json)
+
+
+@csrf_exempt
+@get_parameters
+def get_product(request, parameters):
+    
     try:
-        for order_product in params['orderProducts']:
-            prices.append({
-                'label': f"{order_product['product']['fields']['title']} ({order_product['quantity']})",
-                'amount': int(calculate_sale(order_product['product']['fields']['price'], order_product['product']['fields']['details'].get('sale', 0)) * order_product['quantity'] * int(environ['BOT_CURRENCY_FACTOR']))
-            })
+        product = Product.objects.get(pk=parameters['pk'])
     except:
-        return FailResponse("Не удалось сформировать заказ")
+        return create_fail_response("Не удалось получить товар")
 
-    order_uuid = uuid4()
+    product_json = get_queryset_json([product])[0]
 
-    response = post(f'{environ['BOT_INTERFACE_URL']}/create_invoice_link', json={
-        'title': params.get('title'),
-        'description': params.get('description'),
-        'payload': str(order_uuid),
+    return create_ok_response(product_json)
+
+
+# Вторая часть проекта
+
+from httpx import post
+from uuid import uuid4
+
+from .models import Order
+
+@csrf_exempt
+@validate
+@get_parameters
+def create_order(request, parameters, client_data):
+
+    try:
+        prices = create_prices(parameters['orderProducts'], int(environ['BOT_CURRENCY_FACTOR']))
+    except:
+        return create_fail_response("Не удалось сформировать заказ")
+
+    uuid = str(uuid4())
+
+    bot_response = post(f'{environ['BOT_INTERFACE_URL']}/create_invoice_link', json={
+        'title': "Название заказа",
+        'description': "Описание заказа",
+        'payload': uuid,
         'provider_token': environ['BOT_PROVIDER_TOKEN'],
         'currency': environ['BOT_CURRENCY'],
-        'prices': prices,
-        'max_tip_amount': params.get('max_tip_amount'),
-        'suggested_tip_amounts': params.get('suggested_tip_amounts'),
-        'provider_data': params.get('provider_data'),
-        'photo_url': params.get('photo_url'),
-        'photo_size': params.get('photo_size'),
-        'photo_width': params.get('photo_width'),
-        'photo_height': params.get('photo_height'),
-        'need_name': params.get('need_name'),
-        'need_phone_number': params.get('need_phone_number'),
-        'need_email': params.get('need_email'),
-        'need_shipping_address': params.get('need_shipping_address'),
-        'send_phone_number_to_provider': params.get('send_phone_number_to_provider'),
-        'send_email_to_provider': params.get('send_email_to_provider'),
-        'is_flexible': params.get('is_flexible')
-    }).json()
+        'prices': prices
+    })
 
-    if response['ok']:
-        data_create_order(order_uuid, response['result'], tg_init_data['user']['id'], params['orderProducts'], 'pending')
+    bot_response_json = bot_response.json()
 
-    return JsonResponse(response)
+    if bot_response_json['ok']:
+        Order.objects.create(uuid=uuid, invoice_link=bot_response_json['result'], user_id=client_data['user']['id'], products=parameters['orderProducts'], status='pending')
+
+    return create_ok_response(bot_response_json['result'])
+
 
 @csrf_exempt
-@get_params
-def update_order_status(request, params):
+@get_parameters
+def update_order_status(request, parameters):
 
     kwargs = {}
-    if 'uuid' in params:
-        kwargs['uuid'] = params['uuid']
-    if 'invoiceLink' in params:
-        kwargs['invoice_link'] = params.get('invoiceLink')
+    if 'uuid' in parameters:
+        kwargs['uuid'] = parameters['uuid']
+    if 'invoiceLink' in parameters:
+        kwargs['invoice_link'] = parameters['invoiceLink']
 
     try:
-        order = data_get_order(**kwargs)
+        order = Order.objects.get(**kwargs)
     except:
-        return FailResponse("Не удалось получить заказ")
+        return create_fail_response("Не удалось получить заказ")
 
     try:
-        order.status = params['status']
+        order.status = parameters['status']
         order.clean()
         order.save()
     except:
-        return FailResponse("Не удалось обновить статус заказа")
+        return create_fail_response("Не удалось обновить статус заказа")
 
-    return OkResponse()
+    return create_ok_response()
+
+
+# Третья часть проекта
+
+@csrf_exempt
+@validate
+def get_orders(request, client_data):
+
+    orders = Order.objects.filter(user_id=client_data['user']['id'])
+    orders_json = get_queryset_json(orders)
+
+    return create_ok_response(orders_json)
+
+
+@csrf_exempt
+@validate
+@get_parameters
+def get_order(request, parameters, client_data):
+
+    kwargs = {}
+    if 'pk' in parameters:
+        kwargs['pk'] = parameters['pk']
+    if 'invoiceLink' in parameters:
+        kwargs['invoice_link'] = parameters['invoiceLink']
+    
+    try:
+        order = Order.objects.get(user_id=client_data['user']['id'], **kwargs)
+    except:
+        return create_fail_response("Не удалось получить заказ")
+
+    order_json = get_queryset_json([order])[0]
+
+    return create_ok_response(order_json)

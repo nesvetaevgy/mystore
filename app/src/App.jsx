@@ -75,7 +75,7 @@ export default function App() {
             return axios.post(`/interface/${method}`, params, {
                 headers: {
                     'X-Csrftoken': csrftoken,
-                    'X-Validata': JSON.stringify(validata)
+                    'X-Validation-Data': JSON.stringify(validata)
                 }
             }).then(response => response.data.result)
         }

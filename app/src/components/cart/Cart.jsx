@@ -68,7 +68,7 @@ export default function Cart() {
     const [products, setProducts] = useState([])
 
     useEffect(() => {
-        webInterface.use('getProducts').then(products => setProducts(products))
+        webInterface.use('getAllProducts').then(products => setProducts(products))
     }, [])
 
     if (!products) {
@@ -87,10 +87,8 @@ export default function Cart() {
             }
         }
         
-        webInterface.use('createInvoiceLink', {
-            orderProducts: orderProducts,
-            title: "Название",
-            description: "Описание"
+        webInterface.use('createOrder', {
+            orderProducts: orderProducts
         }).then(invoiceLink => telegramWebApp.openInvoice(invoiceLink))
     }
 

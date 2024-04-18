@@ -11,7 +11,7 @@ https://docs.djangoproject.com/en/5.0/ref/settings/
 """
 
 from pathlib import Path
-from os import environ
+from os import environ #
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -21,14 +21,14 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = environ.get('SECRET_KEY') #'django-insecure-y)8fyf@(cy0)9511td!k4up80z=dw3@-id(kd-rjih!i%8eh$!'
+SECRET_KEY = environ['SECRET_KEY'] #
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = True #
 
-ALLOWED_HOSTS = ['127.0.0.1', 'seemebetter.ru']
+ALLOWED_HOSTS = ['127.0.0.1'] #
 
-CSRF_TRUSTED_ORIGINS = ['https://127.0.0.1', 'https://seemebetter.ru']
+CSRF_TRUSTED_ORIGINS = ['https://127.0.0.1'] #
 
 
 # Application definition
@@ -40,9 +40,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'index.apps.IndexConfig',
-    'interface.apps.InterfaceConfig',
-    'data.apps.DataConfig'
+    'index.apps.IndexConfig', #
+    'interface.apps.InterfaceConfig' #
 ]
 
 MIDDLEWARE = [
@@ -80,27 +79,11 @@ WSGI_APPLICATION = 'web.wsgi.application'
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
 
 DATABASES = {
-    # 'default': {
-    #     'ENGINE': 'django.db.backends.sqlite3',
-    #     'NAME': BASE_DIR / 'db.sqlite3',
-    # }
     'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'HOST': environ.get('DTB_HOST'),
-        'PORT': environ.get('DTB_PORT'),
-        'NAME': environ.get('DTB_NAME'),
-        'USER': environ.get('DTB_USER'),
-        'PASSWORD': environ.get('DTB_PASSWORD')
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
-
-CACHES = {
-    'default': {
-        'BACKEND': 'django.core.cache.backends.redis.RedisCache',
-        'LOCATION': environ.get('RDS_LOCATION'),
-    }
-}
-
 
 # Password validation
 # https://docs.djangoproject.com/en/5.0/ref/settings/#auth-password-validators
@@ -124,9 +107,9 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/5.0/topics/i18n/
 
-LANGUAGE_CODE = 'ru-ru'
+LANGUAGE_CODE = 'ru-ru' #
 
-TIME_ZONE = 'Europe/Saratov'
+TIME_ZONE = 'Europe/Saratov' #
 
 USE_I18N = True
 
@@ -137,10 +120,10 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.0/howto/static-files/
 
 STATIC_URL = 'static/'
-STATIC_ROOT = 'staticfiles/'
+STATIC_ROOT = 'staticfiles/' #
 
-MEDIA_URL = 'media/'
-MEDIA_ROOT = 'mediafiles/'
+MEDIA_URL = 'media/' #
+MEDIA_ROOT = 'mediafiles/' #
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
