@@ -24,11 +24,11 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = environ['SECRET_KEY'] #
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True #
+DEBUG = False #
 
-ALLOWED_HOSTS = ['127.0.0.1'] #
+ALLOWED_HOSTS = ['127.0.0.1', environ['WEB_GLOBAL_HOST']] #
 
-CSRF_TRUSTED_ORIGINS = ['https://127.0.0.1'] #
+CSRF_TRUSTED_ORIGINS = ['https://127.0.0.1', environ['WEB_GLOBAL_URL']] #
 
 
 # Application definition
