@@ -57,6 +57,7 @@ from json import loads as json_loads
 
 from .models import Product
 
+
 def create_ok_response(result = None):
     return JsonResponse({
         'ok': True,
