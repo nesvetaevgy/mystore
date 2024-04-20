@@ -1,0 +1,27 @@
+img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.button {
+  color: var(--tg-theme-button-text-color);
+  background-color: var(--tg-theme-button-color);
+}
+
+.button:hover {
+  cursor: pointer;
+}
+
+a {
+  color: inherit;
+  text-decoration: inherit;
+}
+
+.pointer {
+  cursor: pointer;
+}
+
+svg {
+    fill: inherit;
+}

@@ -1,0 +1,6 @@
+.button {
+    height: 48px;
+    border-radius: 16px;
+    color: var(--tg-theme-button-text-color);
+    background-color: var(--tg-theme-button-color);
+}

@@ -1,0 +1,10 @@
+.section {
+    width: calc(100% - 8px * 2);
+    padding: 8px;
+    background-color: var(--tg-theme-bg-color);
+}
+
+.section-bottom {
+    border-top-left-radius: 16px;
+    border-top-right-radius: 16px;
+}

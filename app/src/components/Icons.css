@@ -1,0 +1,11 @@
+.icon {
+
+}
+
+.icon svg {
+    fill: var(--tg-theme-text-color);
+}
+
+.icon40 {
+    width: 40px;
+}
